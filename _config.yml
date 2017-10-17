@@ -1,2 +1,7 @@
 theme: jekyll-theme-midnight
 timezone: Europe/London
+
+defaults:
+  -
+    values:
+      layout: "default"
