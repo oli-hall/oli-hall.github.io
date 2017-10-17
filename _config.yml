@@ -1,1 +1,16 @@
 theme: jekyll-theme-midnight
+timezone: Europe/London
+
+defaults:
+  -
+    values:
+      layout: "default"
+
+
+authors:
+  oli-hall:
+    name: Oli Hall
+    site: http://oli-hall.github.io
+    twitter: Ham_Sandvich
+    github: oli-hall
+    byline: A scruffy dog, scratching at the door of life.
