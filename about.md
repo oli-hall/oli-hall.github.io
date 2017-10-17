@@ -1,8 +1,8 @@
 ---
-layout: page 
+layout: default
 title: About
-
 ---
 
-# Some info 
-...about how cool you are ;)
+# About me
+
+Human-shaped. Likes software, dogs. Not the best with humans. 
