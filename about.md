@@ -1,6 +1,7 @@
 ---
 layout: post
 title: About Oli Hall
+cover: cali.png
 date: 2017-10-21 14:37
 ---
 
