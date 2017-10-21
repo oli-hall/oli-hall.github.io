@@ -3,6 +3,7 @@ layout: post
 title: "py-dataproc"
 date: 2017-10-21 14:09
 categories: posts
+cover: py-dataproc.png
 ---
 
 #### Or how I learned to stop worrying and love OSS development.
