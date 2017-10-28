@@ -3,6 +3,7 @@ layout: post
 title: "Overenthusiastic CHOWNership"
 date: 2017-10-17 21:16
 categories: posts
+comments: true
 ---
 
 I did something rather foolish this morning. I ran 
