@@ -20,6 +20,6 @@
       <span id="pub-date">Published on {{ page.date | date_to_string }}</span> <span class="separator">&bull;</span>
     </p>
     {% if site.disqus_shortname %}{% include disqus_comments.html %}{% endif %}
-    {% if page.comments != false and site.disqus_shortname %}<section id="disqus_thread"></section><!-- /#disqus_thread -->{% endif %}
+    {% if page.comments != false and site.disqus_shortname %}<section class="disqus_sec" id="disqus_thread"></section><!-- /#disqus_thread -->{% endif %}
   </div>
 </div>
