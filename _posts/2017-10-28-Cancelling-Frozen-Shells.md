@@ -3,6 +3,7 @@ layout: post
 title: "Cancelling Frozen Shells"
 date: 2017-10-28 22:41
 categories: posts
+comments: true
 ---
 
 I came across a [really useful tip](https://twitter.com/__sw1tch__/status/921157696774201346) the other day, so thought I'd pass it on. Have you ever had an SSH session that's dropped, then been frustrated at the resulting frozen terminal? No more! Simply press **Enter**, then **~** and then **.**. Boom, problem solved!

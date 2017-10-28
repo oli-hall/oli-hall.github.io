@@ -4,6 +4,7 @@ title: "py-dataproc"
 date: 2017-10-21 14:09
 categories: posts
 cover: py-dataproc.png
+comments: true
 ---
 
 #### Or how I learned to stop worrying and love OSS development.

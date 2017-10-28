@@ -3,6 +3,7 @@ layout: post
 title: "<3 Python Imports"
 date: 2017-10-26 15:07
 categories: posts
+comments: true
 ---
 
 I had some interesting fun with Python imports today. Long story short, I'm developing a Python package, with a series of classes declared in appropriately named modules, each of which is exposed at the package level for easy import elsewhere. Something like this:
