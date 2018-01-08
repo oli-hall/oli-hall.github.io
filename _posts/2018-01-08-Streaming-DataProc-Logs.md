@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "Streaming job logs from Google Cloud DataProc"
+title: "Streaming job logs from Cloud DataProc"
 date: 2018-01-08 17:37
 categories: posts
 comments: true
@@ -10,7 +10,7 @@ It's been a fair while since my last post, but I'm back at the metaphorical grin
 
 I've been working with Google Cloud DataProc fairly extensively, and one of the biggest changes I've noticed versus working directly with Spark is the lack of local logs. For the uninitiated, you submit Spark (or Hadoop, YARN etc) tasks as 'jobs' to a particular DataProc cluster. They're assigned an alphanumeric ID, and you can track their progress via a web UI. However, it's fairly annoying to load up the web UI each time, click on your job, and watch it slowly unfold. The web viewer is _OK_, but hardly the most sophisticated, and doesn't render things like carriage returns correctly, and often won't refresh properly. In short, a bit frustrating.
 
-Baby steps...
+## Baby steps...
 
 We can definitely do better than that. A good first step would be to fetch the logs locally. But where are they?
 
@@ -52,7 +52,7 @@ This helps a bunch, but still, we don't have any interactivity - we sit there li
 
 However, after digging into the docs, I discovered a potential saviour - the `gcloud` utils! It turns out that there is a `gcloud dataproc jobs wait <job_id>`, which _does_ stream job logs, and dumps out job config at the end. Perfect! A quick test, and sure enough - it does exactly what I need. Sadly, it's not part of the REST API, which means it's not in the Python API library. I can understand this, as I'm not actually sure a pipe in a REST API makes any sense whatsoever, but it means no Python support.
 
-To the subprocess-mobile!
+## To the subprocess-mobile!
 
 Well, it's a hack, but if you wrap this in `subprocess`, it just works (TM). The only slight modification is to pipe `stdout` to an output parameter that isn't used, which takes care of the job configuration being printed upon job completion. Here's the final code:
 
