@@ -4,7 +4,9 @@
   </div>
   <div id="post-info">
     <div id="cover-photo-container">
+    {% if page.cover %}
       <img id="cover-photo" src="/images/{{ page.cover }}">
+    {% endif %}
     </div>
     <div id="info-container">
       <h1 id="title">{{ page.title }}</h1>
