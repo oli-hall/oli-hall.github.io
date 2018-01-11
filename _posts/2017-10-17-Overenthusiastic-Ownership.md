@@ -24,7 +24,9 @@ tl;dr I’m changing the permissions of every (system and user) util on my lapto
 
 I didn’t notice immediately, in fact all was fine until I wanted to `sudo` another command. Suddenly I get a an error:
 
-```sudo: effective uid is not 0, is sudo installed setuid root?```
+```shell_session
+sudo: effective uid is not 0, is sudo installed setuid root?
+```
 
 This doesn’t look good. My knowledge of Unix is decent enough to tell me that UID means ‘User ID’, and UID 0 is the `root` user. I had a sinking feeling as I realised what I’d done: I’d changed ownership of `sudo` from `root` to my user! This is a fun one, as because `sudo` is no longer owned by root, you can’t change it back. A quick search revealed that this was indeed the cause. More worryingly, the [threads](https://www.linuxquestions.org/questions/linux-newbie-8/sudo-effective-uid-is-not-0-is-sudo-installed-setuid-root-4175438614/) that I found suggested that the only way to fix this was likely a full system reinstall. Not what you want to hear at 10am on a weekday! I played around with modifying permissions on `sudo` (fortunately `chmod` was not completely borked), but despite being able to give it almost every permission, I still wasn’t able to get it to the point of being able to `chown` it back.
 
@@ -32,7 +34,8 @@ After poking around a bit, a friend pointed me in the direction of a [downloadab
 
 However, I knew that `sudo` was but one of the potentially thousands of programs in `/usr/bin` that I’d unwittingly modified. I needed to sort out the rest, but how? Here, running on OS X saved my bacon massively. The first error I encountered was opening a new Terminal window:
 
-```Last login: Tue Oct 17 11:25:56 on console login(<hex value>) malloc: * error for object <another hex value>: pointer being freed was not allocated * set a breakpoint in malloc_error_break to debug
+```shell_session
+Last login: Tue Oct 17 11:25:56 on console login(<hex value>) malloc: * error for object <another hex value>: pointer being freed was not allocated * set a breakpoint in malloc_error_break to debug
 [Process completed]
 ```
 

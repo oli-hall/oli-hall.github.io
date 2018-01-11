@@ -8,7 +8,7 @@ comments: true
 
 I had some interesting fun with Python imports today. Long story short, I'm developing a Python package, with a series of classes declared in appropriately named modules, each of which is exposed at the package level for easy import elsewhere. Something like this:
 
-```text
+```
 package
 |- __init__.py
 |- class_a.py
@@ -29,7 +29,7 @@ All fine, no worries. However, I then added a new class, let's call it **B**, th
 
 I then started using my updated package, and immediately started to get errors about importing **Z**:
 
-```bash
+```shell_session
 In [1]: from package import Z
 ---------------------------------------------------------------------------
 ImportError                               Traceback (most recent call last)
