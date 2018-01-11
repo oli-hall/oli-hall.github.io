@@ -16,7 +16,7 @@ We can definitely do better than that. A good first step would be to fetch the l
 
 A bit of digging and introspection of the messages output when a job fails reveals that they are stored in the GCS bucket attached to the DataProc cluster when it's created. Knowing that and the job ID, it is possible to reconstruct the path (This assumes you have a [pydataproc](https://github.com/oli-hall/py-dataproc) client available as `dataproc`):
 
-```
+```python
 storage_client = storage.Client('my_GCP_project_ID')
 
 cluster_info = dataproc.cluster_info('my_cluster_name')
@@ -33,7 +33,7 @@ Basically, we pull out the cluster's bucket from the cluster metadata, and combi
 
 Well, the next stage is to fetch the files back to your machine, and dump them out on the command line (ideally respecting carriage returns). If we ignore streaming the files for now, we should fetch them at the end of the job so that they're complete. Given we have the path and the bucket, we can iterate through the folder contents, and dump them straight through `sys.stdout`:
 
-```
+```python
 storage_client = storage.Client('my_GCP_project_ID')
 print('\nJOB LOGS:\n--------------------\n')
 cluster_info = self.dataproc.cluster_info('my_cluster_name')
@@ -56,7 +56,7 @@ However, after digging into the docs, I discovered a potential saviour - the `gc
 
 Well, it's a hack, but if you wrap this in `subprocess`, it just works (TM). The only slight modification is to pipe `stdout` to an output parameter that isn't used, which takes care of the job configuration being printed upon job completion. Here's the final code:
 
-```
+```python
 subprocess.call(
     [
         "gcloud",
