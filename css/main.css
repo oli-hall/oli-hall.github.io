@@ -34,6 +34,11 @@ a img {
   outline: none;
 }
 
+img {
+  max-width: 725px;
+  width: 100%;
+}
+
 a:hover {
   color: #555;
   border: none;
