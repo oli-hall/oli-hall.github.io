@@ -46,7 +46,7 @@ This interpolates the next two points when drawing each section of the curve, yi
 
 However, how do we generate points? Well, I figured a good starting point would be to generate a number of random points, and draw a curve through them, and see what that looked like. The random points are just random integers between 0 and the max width/height of the Canvas, for simplicity. I'm guaranteeing that the points will be on the Canvas, but no more than that. A nice later addition might be to generate later points based on the previous ones, but that can wait for now. So what does that look like?
 
-![multi-point random curve](images/multi_point_curve.png)
+![multi-point random curve]({{ "images/multi_point_curve.png" | absolute_url }})
 
 OK, we have a random signature generator! Nice... now to make things a bit more interesting.
 
@@ -89,17 +89,17 @@ for(i = 0; i < points.length; i++) {
 }
 ```
 
-![curve with control points](images/control_points.png)
+![curve with control points]({{ "images/control_points.png" | absolute_url }})
 
 ### Make it pretty
 
 Whilst we've successfully made a curve that moves around, it still leaves a certain something to be desired. The final step is to actually make it into something pretty. This proves surprisingly simple: dial up the transparency of the line, and then stop clearing the screen between each animation frame. This causes the curves to layer up in a semi-random fashion, creating some quite pleasing results:
 
-![a paintbrush-like effect](images/paintbrush.png)
+![a paintbrush-like effect]({{ "images/paintbrush.png" | absolute_url }})
 
 The sky is the limit with this stuff. Even with this basic example, I played around with different transparencies, different amounts of noise, and got quite strikingly different results. Here's one where the noise starts at zero, and increases along the length of the curve:
 
-![horsetail](images/horsetail.png)
+![horsetail]({{ "images/horsetail.png" | absolute_url }})
 
 ### Interactive example
 
