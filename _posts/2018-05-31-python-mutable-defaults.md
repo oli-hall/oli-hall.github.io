@@ -41,3 +41,5 @@ def find_imports(module_name, files=None):
 ```
 
 This was a fairly simple issue, with a neat explanation, that nevertheless tripped me up for a good while. What's more, [PyCharm](https://www.jetbrains.com/pycharm/) even highlights issues like these with warnings, but I foolishly ignored it - to my detriment! That'll teach me to learn more about warnings I don't fully understand...
+
+As an aside, the [Python Anti-patterns page](https://docs.quantifiedcode.com/python-anti-patterns/index.html) linked above is an excellent read if you have some time to spare. There's a fair chance you'll have seen some/most of them before, but if it saves you from even one, it's probably worth it!
