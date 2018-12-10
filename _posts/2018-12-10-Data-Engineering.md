@@ -18,8 +18,7 @@ The processing of large amounts of data has been done for almost as long as ther
 
 ### How it works
 
-TODO redo this diagram.
-
+![MapReduce WordCount example]({{ "images/MapReduce.png" | absolute_url }})
 
 ### Data Structure 
 
@@ -31,18 +30,18 @@ Map is the first of the two phases of a MapReduce job (I know, right... who’d�
 
 ### Reduce
 
-Reduce is the second of the two main phases. Each Reducer instance takes a key and a set of values, and outputs a single key and value. This phase can be thought of as ‘gathering’ or ‘reducing’ (see what I did there?) the mapped data from the first phase. In the counting example above, each reducer would process a single key and the individual counts (which’d all be one), summing the counts, thus yielding how many of each key there were.
+Reduce is the second of the two main phases. Each Reducer instance takes a key and a set of values, and outputs a single key and value. This phase can be thought of as ‘gathering’ or ‘reducing’ (see what I did there?) the mapped data from the first phase. In the counting example above, each reducer would process a single key and the individual counts (which here would all be one), summing the counts, thus yielding how many of each key there were.
 
 ### Persisting Data
 
 One key point to note about MapReduce is how it persists data. One of the problems with large scale distributed processing (aside from parallelising the whole mess) is dealing with failures. As you increase the number of machines, the chance of one of them failing in some way also increases. To get around that, M/R persists the data from each mapper and reducer (and some intermediate stages) to disk between each operation. This slows things down, but means that once that Mapper has completed, it shouldn’t need re-running. That means if Mappers 1-999 complete, but Mapper #1000 fails, you only need to rerun #1000, and not the other 999. There’s a bit more involved than this (tl;dr distributed things are haaaard), but this gives an idea of how the resilience works.
 
+TODO - Mention that data is usually stored based on some keying structure, often that used to read it in and process it - allowing machines to process close to the data (known as data locality).
+
 (TODO is this header too much?)
 ### A little more detail
 
-Reading the above, you might realise that a few intermediate phases have not really been mentioned - for example, how do all of the mapped rows with the same key end up being passed to a single reducer?
-
-The image below pictures things slightly differently, and shows a bit more of those intermediate steps - the key bits being the combiner, and the shuffle/sort phase. These bits of wiring are what determines how the individual mappers are wired up to the reducers.
+Reading the above, you might realise that a few intermediate phases have not really been mentioned - for example, how do all of the mapped rows with the same key end up being passed to a single reducer? The image below pictures things slightly differently, and shows some more of those intermediate steps, including the combiner and the shuffle/sort phase. These bits of wiring are what determines how the individual mappers are wired up to the reducers.
 
 TODO diagram showing reducers
 
@@ -54,7 +53,7 @@ For example, you could have a map function that, for most keys, doesn’t do muc
 
 Essentially, writing MapReduce jobs often becomes a tuning/tweaking exercise, balancing data across nodes in all the phases so no one phase takes too long, that all mappers/reducers do similar amounts of work, that shuffling load is minimised, and that the right balance between parallelism and throughput is struck - you may be able to split the task over 200 mappers, but is it faster than splitting it across 2?
 
-As a final note, you can customise almost all aspects of MapReduce, from how records are keyed, to the logic of the shuffle steps and how records are combined together, so you have an immense amount of control.
+There's a lot more to all this, as I'm sure you can imagine - keying/shuffling strategies to minimise data transfer, tweaking parallelism on mappers and reducers to hit the sweet spot where increased parallelism gives the most reward. You can customise almost all aspects of MapReduce, from how records are keyed, to the logic of the shuffle steps and how records are combined together, so you have an immense amount of control.
 
 ### Examples
 
@@ -62,7 +61,7 @@ As a final note, you can customise almost all aspects of MapReduce, from how rec
 
 Given some text in a file, count the number of each word present in the text.
 
-If we work in Python (because we like Python, right?), then our best bet is a library called mrjob. These examples have, for the most part, been pulled from the mrjob docs.
+If we work in Python (because we like Python, right?), then our best bet is a library called [`mrjob`](https://pythonhosted.org/mrjob/). These examples have, for the most part, been pulled from the `mrjob` docs.
 
 To jump straight to the end, here’s what the final code would look like, more or less:
 
