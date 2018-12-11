@@ -14,7 +14,28 @@ As part of my handover whilst leaving my job, I was asked to explain the basics 
 
 ## But first... a history lesson
 
-The processing of large amounts of data has been done for almost as long as there have been computers, but really kicked into another gear in the internet era, as there started being a number of very fast-growing companies wanting to perform a lot of computation, as well as compute hitting a price-point where such computations became realistic. High amongst these companies was Google, who came up with the MapReduce paradigm for spreading large computations across many many machines (this is one of the reasons why [Jeff Dean is so reknowned](https://www.newyorker.com/magazine/2018/12/10/the-friendship-that-made-google-huge)). Whilst initially proprietary, Google published a few papers describing their techniques, which got picked up by some open-source devs and turned into Apache Nutch, which then morphed into [Apache Hadoop](https://en.wikipedia.org/wiki/Apache_Hadoop). Hadoop consists of four core projects (including MapReduce), and a whole host of related projects which have grown up around it in the intervening years.
+The processing of large amounts of data has been done for almost as long as there have been computers, but really kicked into another gear in the internet era, as there started being a number of very fast-growing companies wanting to perform a lot of computation, as well as compute hitting a price-point where such computations became realistic. High amongst these companies was Google, who came up with the MapReduce paradigm for spreading large computations across many many machines (this is one of the reasons why [Jeff Dean is so reknowned](https://www.newyorker.com/magazine/2018/12/10/the-friendship-that-made-google-huge)). Whilst initially proprietary, Google published a few papers describing their techniques, which got picked up by some open-source devs and turned into Apache Nutch, which then morphed into [Apache Hadoop](https://hadoop.apache.org/). Hadoop consists of four core projects (including MapReduce), and a whole host of related projects which have grown up around it in the intervening years.
+
+### The Hadoop ecosystem
+
+Hadoop has grown to be a vast collection of open-source projects centred around distributed processing and storage of data. The core project consists of 4 main projects:
+ - Hadoop Common: A collection of libraries to support other Hadoop modules
+ - Hadoop Distributed FileSystem (HDFS): A distributed filesystem to store large amounts of data across a cluster of standard computing machines
+ - Hadoop YARN: A framework to manage compute resources in a cluster, and schedule applications
+ - Hadoop MapReduce: you should hopefully recognise this bit!
+
+It's since expanded to cover a bunch of other related open-source frameworks built upon/around the Hadoop ecosystem, including (this list shamelessly stolen from the [wiki page for Hadoop](https://en.wikipedia.org/wiki/Apache_Hadoop), though I have used a few of these):
+ - [Pig](https://en.wikipedia.org/wiki/Apache_Pig) - high-level framework for running Hadoop jobs, using an SQL-like language known as Pig Latin
+ - [Hive](https://en.wikipedia.org/wiki/Apache_Hive) - distributed data warehousing framework to give an SQL-like interface over Hadoop
+ - [HBase](https://en.wikipedia.org/wiki/Apache_HBase) - distributed non-relational Database with an SQL-like interface
+ - [Phoenix](https://en.wikipedia.org/wiki/Apache_HBase) - highly distributed, highly parallel relational database built on HBase
+ - [Spark](https://en.wikipedia.org/wiki/Apache_ZooKeeper) - distributed data processing framework
+ - [ZooKeeper](https://en.wikipedia.org/wiki/Apache_ZooKeeper) - distributed consensus framework (amongst other things)
+ - [Impala](https://en.wikipedia.org/wiki/Apache_Impala) - SQL query engine built over Hadoop
+ - [Flume](https://en.wikipedia.org/wiki/Apache_Flume) - distributed log-processing framework
+ - [Sqoop](https://en.wikipedia.org/wiki/Sqoop) - CLI tool for transferring data between relational DBs and Hadoop
+ - [Oozie](https://en.wikipedia.org/wiki/Storm_(event_processor)) - workflow scheduling system for Hadoop jobs
+ - [Storm](https://en.wikipedia.org/wiki/Storm_(event_processor)) - distributed stream-based processing
 
 ### How it works
 
@@ -34,24 +55,17 @@ Reduce is the second of the two main phases. Each Reducer instance takes a key a
 
 ### Persisting Data
 
-One key point to note about MapReduce is how it persists data. One of the problems with large scale distributed processing (aside from parallelising the whole mess) is dealing with failures. As you increase the number of machines, the chance of one of them failing in some way also increases. To get around that, M/R persists the data from each mapper and reducer (and some intermediate stages) to disk between each operation. This slows things down, but means that once that Mapper has completed, it shouldn’t need re-running. That means if Mappers 1-999 complete, but Mapper #1000 fails, you only need to rerun #1000, and not the other 999. There’s a bit more involved than this (tl;dr distributed things are haaaard), but this gives an idea of how the resilience works.
+One key point to note about MapReduce is how it persists data. One of the problems with large scale distributed processing (aside from parallelising the whole mess) is dealing with failures. As you increase the number of machines, the chance of one of them failing in some way also increases. To get around that, M/R persists the data from each mapper and reducer (and some intermediate stages) to disk between each operation. This slows things down, but means that once that Mapper has completed, it shouldn’t need re-running. That means if Mappers 1-999 complete, but Mapper #1000 fails, you only need to rerun #1000, and not the other 999. There’s a bit more involved than this (tl;dr distributed things are _haaaard_), but this gives an idea of how the resilience works.
 
-TODO - Mention that data is usually stored based on some keying structure, often that used to read it in and process it - allowing machines to process close to the data (known as data locality).
+Data is usually persisted in a way that reflects the most common usage of data, so that when queried, it can be processed by nearby machines (or even the same machine, if machines are used for both storage and processing). This is known as data locality, and can reduce job times massively if the data storage reflects how the job is querying it, as all of the data used by the job doesn't need to be copied across the network to other machines in the cluster.
 
-(TODO is this header too much?)
-### A little more detail
-
-Reading the above, you might realise that a few intermediate phases have not really been mentioned - for example, how do all of the mapped rows with the same key end up being passed to a single reducer? The image below pictures things slightly differently, and shows some more of those intermediate steps, including the combiner and the shuffle/sort phase. These bits of wiring are what determines how the individual mappers are wired up to the reducers.
-
-TODO diagram showing reducers
-
-This is an important aspect of MapReduce, and feeds into Spark as well. When running a job, you control a lot of different levers, from the number of mappers and reducers to the scheme used to allocate keys to each mapper, and how records are shuffled and sorted.
+Another important aspect to cover is the shuffling/sorting - the components that determine which data ends up on which reducer, and that try and balance data across the different nodes. This is an important aspect of MapReduce, and feeds into Spark as well. When running a job, you control a lot of different levers, from the number of mappers and reducers to the scheme used to allocate keys to each mapper, and how records are shuffled and sorted.
 
 You can, for example, choose to have a single reducer, in which case all records will be moved to a single reducer instance on a single machine, which can make combining all the records easier (but if you’ve got a lot of data to reduce, this could become a bottleneck). It all depends on how the data is split across the nodes, and how the map/reduce functions affect that.
 
-For example, you could have a map function that, for most keys, doesn’t do much, but for certain keys, produces loads of records. This means that, even if your input data is distributed evenly, the data out of your map phase will all be on one node, making that node a bottleneck, both for speed and potential failure (all the important work is done by a single node, so if it fails, everything needs redoing).
+You could have a map function that, for most keys, doesn’t do much, but for certain keys, produces loads of records. This means that, even if your input data is distributed evenly, the data out of your map phase will all be on one node, making that node a bottleneck, both for speed and potential failure (all the important work is done by a single node, so if it fails, everything needs redoing).
 
-Essentially, writing MapReduce jobs often becomes a tuning/tweaking exercise, balancing data across nodes in all the phases so no one phase takes too long, that all mappers/reducers do similar amounts of work, that shuffling load is minimised, and that the right balance between parallelism and throughput is struck - you may be able to split the task over 200 mappers, but is it faster than splitting it across 2?
+Essentially, writing MapReduce jobs often becomes a tuning/tweaking exercise, balancing data across nodes in all the phases so no one phase takes too long, that all mappers/reducers do similar amounts of work, that shuffling load is minimised, and that the right balance between parallelism and throughput is struck - you may be able to split the task over 200 mappers, but is it faster than splitting it across two?
 
 There's a lot more to all this, as I'm sure you can imagine - keying/shuffling strategies to minimise data transfer, tweaking parallelism on mappers and reducers to hit the sweet spot where increased parallelism gives the most reward. You can customise almost all aspects of MapReduce, from how records are keyed, to the logic of the shuffle steps and how records are combined together, so you have an immense amount of control.
 
@@ -59,11 +73,9 @@ There's a lot more to all this, as I'm sure you can imagine - keying/shuffling s
 
 #### Word Count
 
-Given some text in a file, count the number of each word present in the text.
+Let's look at the word counting example we used earlier in the diagram. If we work in Python (because we like Python, right?), then our best bet is a library called [`mrjob`](https://pythonhosted.org/mrjob/). These examples have, for the most part, been pulled from the `mrjob` docs.
 
-If we work in Python (because we like Python, right?), then our best bet is a library called [`mrjob`](https://pythonhosted.org/mrjob/). These examples have, for the most part, been pulled from the `mrjob` docs.
-
-To jump straight to the end, here’s what the final code would look like, more or less:
+To jump straight to the end, here’s what the final code would look like, more or less (some of the I/O has been skipped for brevity):
 
 ```python
 from mrjob.job import MRJob
@@ -134,38 +146,13 @@ This means running two MapReduce steps in sequence - a common pattern once compl
 
 The second MR job doesn’t have a map phase at all - it doesn’t need to do anything here. The reduce phase takes all the word counts from the previous phase (which are all mapped to a key of None), and takes the maximum row.
 
-### The Hadoop ecosystem
-
-Hadoop has grown to be a vast collection of open-source projects centred around distributed processing and storage of data. The core project consists of 4 main projects:
- - Hadoop Common: A collection of libraries to support other Hadoop modules
- - Hadoop Distributed FileSystem (HDFS): A distributed filesystem to store large amounts of data across a cluster of standard computing machines
- - Hadoop YARN: A framework to manage compute resources in a cluster, and schedule applications
- - Hadoop MapReduce: you should hopefully recognise this bit!
-
-It's since expanded to cover a bunch of other related open-source frameworks built upon/around the Hadoop ecosystem, including (this list shamelessly stolen from the wiki page for Hadoop, though I have used a few of these):
- - Pig - high-level framework for running Hadoop jobs, using an SQL-like language known as Pig Latin
- - Hive - distributed data warehousing framework to give an SQL-like interface over Hadoop
- - HBase - distributed non-relational Database with an SQL-like interface
- - Phoenix - highly distributed, highly parallel relational database built on HBase
- - Spark - distributed data processing framework
- - ZooKeeper - distributed consensus framework (amongst other things)
- - Impala - SQL query engine built over Hadoop
- - Flume - distributed log-processing framework
- - Sqoop - CLI tool for transferring data between relational DBs and Hadoop
- - Oozie - workflow scheduling system for Hadoop jobs
- - Storm - distributed stream-based processing
-
 ## Spark
 
-onto the big player - Spark.
-
-Spark is an open-source framework, now ‘owned’ by DataBricks, designed to fix/improve upon many of the original frustrations developers had with Hadoop/MapReduce.
+So we've seen a fair bit about Hadoop and MapReduce, and how all that works, but let's face it, if you're looking at processing data these days, chances are you won't be using MapReduce. So now it's onto the main player these days - [Spark](https://spark.apache.org/). Spark is an open-source framework, now ‘owned’ by [DataBricks](https://databricks.com/), designed to fix/improve upon many of the original frustrations developers had with Hadoop/MapReduce.
 
 ### How is it different/better?
 
-Spark has a much easier/more accessible interface than existing tools, giving a higher-level toolkit with which to tackle data processing problems. Whereas MapReduce has, at its most basic, two operations (Map and Reduce), Spark has dozens (for RDDs, for DataFrames there are way more), encouraging a more natural flow in processing.
-
-This makes it much easier to tackle more complex problems, as well as making Spark programs (generally) easier to understand/read.
+Spark has a much easier/more accessible interface than existing tools, giving a higher-level toolkit with which to tackle data processing problems. Whereas MapReduce has, at its most basic, two operations (Map and Reduce), Spark has dozens (for RDDs, for DataFrames there are way more), encouraging a more natural flow in processing. This makes it much easier to tackle more complex problems, as well as making Spark programs (generally) easier to understand/read.
 
 ### Streaming
 
