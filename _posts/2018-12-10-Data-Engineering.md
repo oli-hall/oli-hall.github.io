@@ -154,23 +154,23 @@ So we've seen a fair bit about Hadoop and MapReduce, and how all that works, but
 
 Spark has a much easier/more accessible interface than existing tools, giving a higher-level toolkit with which to tackle data processing problems. Whereas MapReduce has, at its most basic, two operations (Map and Reduce), Spark has dozens (for RDDs, for DataFrames there are way more), encouraging a more natural flow in processing. This makes it much easier to tackle more complex problems, as well as making Spark programs (generally) easier to understand/read.
 
-### Streaming
-
-MapReduce is built around the concept of batch processing - taking a big chunk of data and processing it in one go. That works well for fairly static data, but in the age of the internet, a lot of data is constantly being updated, and even with MapReduce, people started to write jobs to incrementally process data on regular intervals. Spark retains the batch processing capabilities of MapReduce, but adds a native ‘streaming’ interface, to process streams of data - think a social media feed, or data from an IoT device. This thankfully started the slow death of the ‘lambda architecture’ - a brief fad combining streaming and batch systems to try and get the best of both worlds.
-
 ### In-memory storage
 
 The big win for Spark was processing data in-memory. As mentioned in the MapReduce section, Hadoop M/R jobs write data to disk between every step, then read it back out for the next. This makes the jobs very resilient to individual machine failures, as everything is persisted (only a single machine’s stages are lost), but very slow. If you’re trying to perform many consecutive operations on a huge dataset, then writing everything to disk and reading it between every step is really slow.
 
 Spark stores data in memory, persisting the data to disk in the background. That, along with a bunch of other clever optimisation tricks allows it to be potentially 100x faster than an equivalent Hadoop job. When you’re processing petabytes of data every day, that can become the difference between usable daily data and… nothing.
 
+### Streaming
+
+MapReduce is built around the concept of batch processing - taking a big chunk of data and processing it in one go. That works well for fairly static data, but in the age of the internet, a lot of data is constantly being updated, and even with MapReduce, people started to write jobs to incrementally process data on regular intervals. Spark retains the batch processing capabilities of MapReduce, but adds a native ‘streaming’ interface, to process streams of data - think a social media feed, or data from an IoT device. This thankfully started the slow death of the ‘lambda architecture’ - a brief fad combining streaming and batch systems to try and get the best of both worlds.
+
 ### Running Spark
 
 Spark runs atop a cluster of machines, but doesn’t have to run directly on the machines. Options include:
  - Spark native - run Spark directly on the machines
  - Hadoop YARN - run Spark via the YARN scheduler framework. This is a good option if you want to access data stored on HDFS, or want to share your cluster with Hadoop jobs
- - Apache Mesos - Mesos is another scheduling framework - it adds an abstraction layer atop a cluster of machines, allowing different frameworks to run simultaneously (i.e. like YARN, but more versatile).
- - Kubernetes - a Google-backed scheduling framework, approximately equivalent to Mesos.
+ - [Apache Mesos](http://mesos.apache.org/) - Mesos is another scheduling framework - it adds an abstraction layer atop a cluster of machines, allowing different frameworks to run simultaneously (i.e. like YARN, but more versatile).
+ - [Kubernetes](https://kubernetes.io/) - a Google-backed scheduling framework, approximately equivalent to Mesos.
 
 ### Language
 
@@ -178,35 +178,11 @@ Spark is written in Java and Scala, but has native interfaces in Java, Scala, Py
 
 The Python interface works pretty well, and is well supported for the most part, although it does have some ‘fun’ quirks - if you manage to make it throw errors, it will sometimes do so in 3 different languages, making tracking down issues… complex.
 
-Python and Scala also have a REPL - an interactive shell - which can make prototyping/quick data explorations a breeze. Because of this, it can also be called from notebooks, which I’m sure will appeal to some :)
-
-### Disadvantages
-
-Spark has a lot of great features, but there are a few downsides. One is the complexity - there’s a huge amount to learn, and it can take years to grasp the nuances of the various features. Tuning and optimising Spark jobs in particular is a fine art - there are a huge number of variables, and getting good performance is hard. Particularly for smaller datasets, running through Spark, even optimised Spark, can end up being slower than an equivalent plain ol’ Python program, just because of the overhead of spinning up a job on a large Spark cluster, sending data to and fro across the network.
-
-Setting up a Spark cluster (whether dedicated, or via Kubernetes, Mesos or YARN) is non-trivial - even upon cloud compute it can be a lot of configuration and networking - you need devops assistance to maintain it and keep everything running smoothly.
-
-Finally, if you have a decent number of Spark jobs, and start creating utils, and job tests, testing can be a nightmare. The official way to test Spark involves spinning up a dedicated Spark node (either locally or on a Cluster), running a test, and spinning down again. That’s really slow, even with minimal settings. I actually ended up writing a library to mock Spark and run unit tests (it currently only supports RDDs, and is probably a bit out of date, but was hundreds of times faster than spinning up Spark).
-
-### Spark Architecture
-
-Spark can be run either in ‘local’ mode, in which case it will run on the local machine, or in a ‘cluster’ mode, in which case it will run the job on a specified cluster. Spark clusters consist of one or more master nodes, which orchestrate job running, and where data ends up, and zero or more slave/worker nodes. These perform the majority of the heavy lifting. Certain operations are run purely on the master nodes, and some purely on workers (another factor to consider when tuning jobs). If there is more than one master, then the masters can recover from failure (one of the master nodes failing/going down), and generally jobs are resilient to the failure of worker nodes.
-
-### Data Locality
-
-When processing large amounts of data, you’ll want to consider where the data is coming from. If it’s coming from some external datastore, all of that data will need to be streamed over the network, which will add a lot of network traffic and time to jobs. Another option is going for data locality - trying to store the data on the same nodes that will do the processing. This is often done when the data is stored in HDFS or Cassandra - running both data storage and processing on the same physical machines. You’ll also need to consider the parallelism of the jobs involved to minimise streaming of data between nodes - if running on YARN, Spark can optimise tasks for where the data is located, which can make a big difference.
-
-### Launching Spark jobs
-
-As with many distributed frameworks, jobs are launched by passing a job in a self-contained class to a special script. In the case of Spark, there’s a launcher script called spark-submit, that lives in bin in any spark installation. This bundles up the job and fires it off to to the master node for execution.
-
-If your code is not entirely self-contained, then things start to get a little more complex. If you have 3rd party library dependencies, then you’ll need to to make sure that these are installed on every single machine in the cluster. Referencing your own code requires packaging it up and passing it across to the cluster.
-
-This launching method does mean that running jobs from a local application requires some wrapping to make sure that everything is configured correctly and the right bits of code are sent to the right place. I’ll cover a solution I’ve used for DataProc in the DataProc section.
+Python and Scala also have a [REPL](https://en.wikipedia.org/wiki/Read%E2%80%93eval%E2%80%93print_loop) - [an interactive shell](https://spark.apache.org/docs/latest/quick-start.html#basics) - which can make prototyping/quick data explorations a breeze. Because of this, it can also be [called from notebooks](https://blog.sicara.com/get-started-pyspark-jupyter-guide-tutorial-ae2fe84f594f), which I’m sure will appeal to those of the Data Science inclination :)
 
 ### Data Structures
 
-There are three main concepts to cover when working with Spark - SparkContext, RDDs and DataFrames. The SparkContext is the main entry-point to Spark. This is where you configure which cluster you’re connecting to, job configuration, and how you pull datasets into Spark.
+There are three main concepts to cover when working with Spark - SparkContext, RDDs and DataFrames. The [`SparkContext`](http://spark.apache.org/docs/latest/api/python/pyspark.html#pyspark.SparkContext) is the main entry-point to Spark. This is where you configure which cluster you’re connecting to, job configuration, and how you pull datasets into Spark.
 
 ```python
 conf = SparkConf().setAppName(appName).setMaster(master)
@@ -217,20 +193,43 @@ In terms of datasets, there are two different structures in which data can be st
 
 #### RDDs
 
-RDDs (Resilient Distributed Datasets) are the bread and butter of Spark. These are what they say on the tin - a way of representing a collection of data - a list, a set, whatever it may be. The items in an RDD do not all have to be of the same type - it’s merely a bucket of data. RDDs can be modified by many common functional operators - map, filter, reduce, etc - as well as more specialised operators that assume data in key-value form, similar to that used in MapReduce. This key-value form operates in similar ways - the key is used to control parallelism, with keys used to assign data to different Spark workers, and in various grouping operations.
+[RDDs](https://spark.apache.org/docs/latest/rdd-programming-guide.html) (Resilient Distributed Datasets) are the bread and butter of Spark. These are what they say on the tin - a way of representing a collection of data - a list, a set, whatever it may be. The items in an RDD do not all have to be of the same type - it’s merely a bucket of data. RDDs can be modified by many common functional operators - map, filter, reduce, etc - as well as more specialised operators that assume data in key-value form, similar to that used in MapReduce. This key-value form operates in similar ways - the key is used to control parallelism, with keys used to assign data to different Spark workers, and in various grouping operations.
 
 #### DataFrames
 
-DataFrames are a later addition, and if you’re from a Data Science background, they’re not dissimilar to Pandas’ DataFrame construct (albeit designed for parallelised processing within Spark). They hold more structured data in a columnar format, with each column having a discrete type. This means that each row of data in a DataFrame is of the same type, effectively, which means there are more assumptions that can be made when using operators.
+[DataFrames](https://spark.apache.org/docs/latest/sql-programming-guide.html) are a later addition, and if you’re from a Data Science background, they’re not dissimilar to Pandas’ DataFrame construct (albeit designed for parallelised processing within Spark). They hold more structured data in a columnar format, with each column having a discrete type. This means that each row of data in a DataFrame is of the same type, effectively, which means there are more assumptions that can be made when using operators.
 
 DataFrames are part of SparkSQL - an SQL-like construct over base Spark (RDDs and their associated operators), giving a familiar relational-esque interface to tables of data. There are joins, unions, etc. DataFrames can be used directly, in a similar manner to RDDs, by creating a dataset and calling methods upon it (map, filter, etc), or indirectly, by creating tables (virtual constructs over distributed datasets), and running scripts written in SparkSQL over them. This means that folks more used to working in SQL can still analyse huge non-relational datasets in Spark - SparkSQL provides a similar interface to Apache Hive in the Hadoop/MapReduce world.
+
+### Spark Architecture
+
+Spark can be run either in ‘local’ mode, in which case it will run on the local machine, or in a ‘cluster’ mode, in which case it will run the job on a specified cluster. Spark clusters consist of one or more master nodes, which orchestrate job running, and where data ends up, and zero or more slave/worker nodes. These perform the majority of the heavy lifting. Certain operations are run purely on the master nodes, and some purely on workers (another factor to consider when tuning jobs). If there is more than one master, then the masters can recover from failure (one of the master nodes failing/going down), and generally jobs are resilient to the failure of worker nodes.
+
+### Data Locality
+
+As with MapReduce, when processing large amounts of data, you’ll want to consider where the data is coming from. If it’s coming from some external datastore, all of that data will need to be streamed over the network, which will add a lot of network traffic and time to jobs. Another option is co-locating data - storing the data on the same nodes that will do the processing. This is often done when the data is stored in HDFS or Cassandra - running both data storage and processing on the same physical machines. You’ll also need to consider the parallelism of the jobs involved to minimise streaming of data between nodes - if running on YARN, Spark can optimise tasks for where the data is located, which can make a big difference.
+
+### Launching Spark jobs
+
+As with many distributed frameworks, jobs are [launched](https://spark.apache.org/docs/latest/submitting-applications.html) by passing a job in a self-contained class to a special script. In the case of Spark, there’s a launcher script called spark-submit, that lives in bin in any spark installation. This bundles up the job and fires it off to to the master node for execution.
+
+If your code is not entirely self-contained, then things start to get a little more complex. If you have 3rd party library dependencies, then you’ll need to to make sure that these are installed on every single machine in the cluster. Referencing your own code requires packaging it up and passing it across to the cluster.
+
+This launching method does mean that running jobs from a local application requires some wrapping to make sure that everything is configured correctly and the right bits of code are sent to the right place. I’ll cover a solution I’ve used for DataProc in the DataProc section.
+
+### Disadvantages
+
+Spark has a lot of great features, but there are a few downsides. One is the complexity - there’s a huge amount to learn, and it can take years to grasp the nuances of the various features. Tuning and optimising Spark jobs in particular is a fine art - there are a huge number of variables, and getting good performance is hard. Particularly for smaller datasets, running through Spark, even optimised Spark, can end up being slower than an equivalent plain ol’ Python program, just because of the overhead of spinning up a job on a large Spark cluster, sending data to and fro across the network.
+
+Setting up a Spark cluster (whether dedicated, or via Kubernetes, Mesos or YARN) is non-trivial - even upon cloud compute it can be a lot of configuration and networking - you need devops assistance to maintain it and keep everything running smoothly.
+
+Finally, if you have a decent number of Spark jobs, and start creating utils, and job tests, testing can be a nightmare. The official way to test Spark involves spinning up a dedicated Spark node (either locally or on a Cluster), running a test, and spinning down again. That’s really slow, even with minimal settings. I actually ended up [writing a library](https://github.com/oli-hall/bermann) to mock Spark and run unit tests (it currently only supports RDDs, and is probably a bit out of date, but was hundreds of times faster than spinning up Spark).
 
 ### Examples
 
 #### Word Count
 
-Count all words present in a file of data.
-(Assumes a SparkContext set up and available as sc).
+It's good all 'count all the words in a file' time again, this time with Spark. This assumes the presence of a [`SparkContext`](http://spark.apache.org/docs/latest/api/python/pyspark.html#pyspark.SparkContext) set up correctly and available as `sc`.
 
 ```python
 text_file = sc.textFile("hdfs://...")
@@ -239,7 +238,7 @@ counts = text_file.flatMap(lambda line: line.split(" ")) \
 counts.saveAsTextFile("hdfs://...")
 ```
 
-As you can see, Spark uses a fluent interface to chain operations together to build a logical pipeline to process data. Here, we read in the file with textFile, which produces an RDD of each line in the file. We then use flatMap to split each line into a set of words (flatMap takes one input, and yields zero to many outputs), count the values per key, and save the output as another text file.
+As you can see, Spark uses a [fluent interface](https://en.wikipedia.org/wiki/Fluent_interface) to chain operations together to build a logical pipeline to process data. Here, we read in the file with textFile, which produces an RDD of each line in the file. We then use flatMap to split each line into a set of words (flatMap takes one input, and yields zero to many outputs), count the values per key, and save the output as another text file.
 
 So far, so familiar - it’s just MapReduce with nicer syntax.
 
@@ -259,19 +258,17 @@ Here you can see that once the problem becomes a little more involved, the simpl
 
 #### What is it?
 
-Cloud DataProc is a service by Google, that is a value add on top of basic compute - the basis of almost all cloud compute providers. People have been running Spark and MapReduce on cloud computing since the early days of such services, as it enables relatively small companies to perform huge amounts of computation without owning their own data centres. However, setting up a Spark/Hadoop cluster on bare compute takes a fair amount of DevOps experience, and maintaining it also is a non-trivial operation.
+[Cloud DataProc](https://cloud.google.com/dataproc/) is a service by Google, that is a value add on top of basic compute - the basis of almost all cloud compute providers. People have been running Spark and MapReduce on cloud computing since the early days of such services, as it enables relatively small companies to perform huge amounts of computation without owning their own data centres. However, setting up a Spark/Hadoop cluster on bare compute takes a fair amount of DevOps experience, and maintaining it also is a non-trivial operation.
 
-With that in mind, Google (and AWS, with EMR) have decided to offer hosted Spark/Hadoop clusters as a service - press a button and your cluster spins up, and press another and it shuts down.
+With that in mind, Google (and AWS, with [EMR](https://aws.amazon.com/emr/)) have decided to offer hosted Spark/Hadoop clusters as a service - press a button and your cluster spins up, and press another and it shuts down.
 
 #### How does it work?
 
-DataProc adds a UI, an API and CLI integration, allowing spin-up of an arbitrarily-sized Hadoop and Spark cluster (each cluster comes with Hadoop and Spark preinstalled - generally each will be at the latest major release). You can choose the size and number of nodes, from a single node cluster, up to a multi-thousand node cluster with 96 core machines. All of the networking between nodes is all handled by GCP, and you’re simply provided with a name to connect to.
+DataProc consists of a UI, an API and CLI integration, allowing spin-up of an arbitrarily-sized Hadoop and Spark cluster (each cluster comes with Hadoop and Spark preinstalled - generally each will be at the latest major release). You can choose the size and number of nodes, from a single node cluster, up to a multi-thousand node cluster with 160 core machines. All of the networking between nodes is all handled by GCP, and you’re simply provided with a name to connect to.
 
-Jobs are launched via the DataProc UI - you tell it what cluster to run the job on, and GCP again figures out how to package everything up and send to the cluster, and how to return results.
+Jobs are launched via the DataProc UI - you tell it what to run on which cluster, and GCP again figures out how to package everything up and send to the cluster, and how to return results.
 
-You can configure what dependencies and packages are present on each node in the cluster by use of ‘init scripts’ - essentially shell scripts that are executed on the nodes as they’re being configured. These can install linux packages, set environment variables and install python packages.
-
-If you need to SSH into a given machine, the UI will give you access to the underlying compute instances, and from there they act like any other compute instance - you can SSH in, as well as view CPU usage, memory usage, etc.
+You can configure what dependencies and packages are present on each node in the cluster by use of ‘initialisation actions’ - essentially shell scripts that are executed on the nodes as they’re being configured. These can install linux packages, set environment variables, install python packages and more. If you need to SSH into a given machine, the UI will give you access to the underlying compute instances, and from there they act like any other compute instance - you can SSH in, as well as view CPU usage, memory usage, etc.
 
 #### How do you use it?
 
