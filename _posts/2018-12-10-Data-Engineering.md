@@ -12,6 +12,8 @@ TODO links
 
 As part of my handover whilst leaving my job, I was asked to explain the basics of Data Engineering, as my departure would be leaving the team without anyone with that skillset. I gave a workshop/talk, and wrote up notes for that to keep around in case anyone forgot the finer details. The notes may've got a bit out of hand, as I found myself at the tail-end of a 19 page document! Anyhow, I figured since it's not proprietary, I should probably share it here as well, which should force me to remove at least some of the mistakes. I've been playing around with Spark and Hadoop for 4-5 years, and GCP for around 2, but I'm by no means an expert - so there may be the odd error here and there!
 
+I'm going to lean fairly heavily towards tech I'm familiar with (Hadoop, Spark, Beam, GCP). That doesn't mean it's bad to use Flink, or EMR, or any of the other alternatives, merely that I can't weigh in on how they work and my experiences with them. 
+
 ## But first... a history lesson
 
 The processing of large amounts of data has been done for almost as long as there have been computers, but really kicked into another gear in the internet era, as there started being a number of very fast-growing companies wanting to perform a lot of computation, as well as compute hitting a price-point where such computations became realistic. High amongst these companies was Google, who came up with the MapReduce paradigm for spreading large computations across many many machines (this is one of the reasons why [Jeff Dean is so reknowned](https://www.newyorker.com/magazine/2018/12/10/the-friendship-that-made-google-huge)). Whilst initially proprietary, Google published a few papers describing their techniques, which got picked up by some open-source devs and turned into Apache Nutch, which then morphed into [Apache Hadoop](https://hadoop.apache.org/). Hadoop consists of four core projects (including MapReduce), and a whole host of related projects which have grown up around it in the intervening years.
@@ -324,13 +326,17 @@ This allows clusters to be sized per job, and have different dependencies (one j
 
 ## Apache Beam
 
-TODO a better intro to this
-
-[Beam](https://beam.apache.org) is designed to be a higher-level abstraction (yes, the layers, the layers…) over Spark/Flink/others, to remove all that hassle with tuning, parallelisation and the like. Having realised that tuning Spark jobs is an art form that you can never really succeed at, Beam aims to remove that part entirely - you point it at a cluster, and it runs as fast as it possibly can. It also exposes lots of metrics and graphs, so that if you have inadvertently made a bottleneck, you can spot it easily.
+And now onto the latest and greatest of the frameworks I want to cover. [Beam](https://beam.apache.org) is designed to be a higher-level abstraction (yes, the layers, the layers…) over Spark/Flink/others, to remove all that hassle with tuning, parallelisation and the like. Having realised that tuning Spark jobs is an art form that you can never really succeed at, Beam aims to remove that part entirely - you point it at a cluster, and it runs as fast as it possibly can. It also exposes lots of metrics and graphs, so that if you have inadvertently made a bottleneck, you can spot it easily.
 
 It also removes the distinction between Streaming and Batch computation - now everything uses the same pipelines. If the data source is static, it runs in batch, otherwise it streams results, and the user doesn’t have to know the difference. There are APIs available in Java, Go and Python.
 
 I should note at this point that whilst I’ve worked with DataProc a fair bit, and have built a production system around it twice now, I’ve only done initial testing of DataFlow and haven’t used it in anger - take what I say about it with a pinch of salt.
+
+### Key Concepts
+
+`Pipeline` - a series of processing steps making up a data processing task. Equivalent to a Spark or MapReduce job.
+`PCollection` - a wrapper around data, either externally sourced (e.g. from a DB, files, etc) or loaded in from memory. Can be bounded (i.e. a fixed amount of data) or unbounded (e.g. streaming data). This is a similar concept to RDDs and DataFrames in Spark.
+`PTransform` - a wrapper around a transformation of some kind - it takes one or more `PCollection`s, performs some user-defined processing function, and outputs zero or more `PCollection`s. This can be something like a map, reduce or similar, or an I/O transform, which pushes data out to some external store.
 
 ### Runners
 
@@ -343,29 +349,17 @@ Because Beam is an abstraction, it doesn’t reinvent the wheel when it comes to
 
 Which one you choose depends on what benefits/drawbacks you want to live with, as each brings its own guarantees/issues due to implementation differences. There’s work ongoing to try and bring the same feature set and similar guarantees to each runner, but the exact specifics will vary. More detail [here](https://beam.apache.org/documentation/runners/capability-matrix/).
 
-### Cloud DataFlow
+#### Launching a Pipeline
 
-[Cloud DataFlow](https://cloud.google.com/dataflow/) is one of the Runner options for Beam - essentially a computational back-end for Beam. This is quite similar to DataProc, in that it uses the benefits of cloud compute to avoid running your own cluster, but takes it further - it avoids the need to spin up a dedicated cluster, allocating as many compute resources as it can once the job is submitted. Because Beam can allocate compute and tune jobs automatically, it effectively means that DataFlow can run jobs as fast as possible, as the maximum amount of compute available is effectively infinite, and the compute is charged per unit time. If a job can be parallelised massively, it will be, so it will be run as fast as it possibly can, and it will cost the same as running it in a less parallel fashion over a longer time period.
+As mentioned above, DataFlow can launch on a number of different platforms, from the local machine to Spark to DataFlow. I’ll cover local and DataFlow here - the two are fairly similar - and if you’re interested, examples for the other runners are on the [Python Quickstart page](https://beam.apache.org/get-started/quickstart-py/) for Beam.
 
-tl;dr DataFlow is serverless - it removes the need for interaction with any form of physical server - you’re just paying for things to be computed, as fast as possible.
-
-### Key Concepts
-
-Pipeline - a series of processing steps making up a data processing task. Equivalent to a Spark or MapReduce job.
-PCollection - a wrapper around data, either externally sourced (e.g. from a DB, files, etc) or loaded in from memory. Can be bounded (i.e. a fixed amount of data) or unbounded (e.g. streaming data). This is a similar concept to RDDs and DataFrames in Spark.
-PTransform - a wrapper around a transformation of some kind - it takes one or more PCollections, performs some user-defined processing function, and outputs zero or more PCollections. This can be something like a map, reduce or similar, or an I/O transform, which pushes data out to some external store.
-
-### Launching a Pipeline
-
-As mentioned in the ‘Runners’ section, DataFlow can launch on a number of different platforms, from the local machine to Spark to DataFlow. I’ll cover local and DataFlow here - the two are fairly similar - and if you’re interested, examples for the other runners are on the Python Quickstart page for Beam.
-
-#### Direct
+##### Direct
 
 ```bash
 python -m apache_beam.examples.wordcount --input /path/to/inputfile --output /path/to/write/counts
 ```
 
-#### DataFlow
+##### DataFlow
 
 ```bash
 python -m apache_beam.examples.wordcount --input gs://dataflow-samples/shakespeare/kinglear.txt \
@@ -379,6 +373,12 @@ N.B. you need to make sure you have the DataFlow Beam pip module installed befor
 ```bash
 pip install apache-beam[gcp]
 ```
+
+### Cloud DataFlow
+
+[Cloud DataFlow](https://cloud.google.com/dataflow/) is one of the Runner options for Beam - essentially a computational back-end for Beam. This is quite similar to DataProc, in that it uses the benefits of cloud compute to avoid running your own cluster, but takes it further - it avoids the need to spin up a dedicated cluster, allocating as many compute resources as it can once the job is submitted. Because Beam can allocate compute and tune jobs automatically, it effectively means that DataFlow can run jobs as fast as possible, as the maximum amount of compute available is effectively infinite, and the compute is charged per unit time. If a job can be parallelised massively, it will be, so it will be run as fast as it possibly can, and it will cost the same as running it in a less parallel fashion over a longer time period.
+
+tl;dr DataFlow is [serverless](https://en.wikipedia.org/wiki/Serverless_computing) - it removes the need for interaction with any form of physical server - you’re just paying for things to be computed, as fast as possible.
 
 ### Examples
 
@@ -440,4 +440,6 @@ lines = p | “ReadInput” >> beam.io.ReadFromText(“gs://some/inputData.txt�
 result = p.run()
 ```
 
-TODO outro
+## Here endeth the missive
+
+So there you have it - a short and incomplete summary of Data Engineering on and around GCP, looking at MapReduce, Spark, and Beam, and their GCP implementations. Hopefully this has been useful, and if you've made it all the way to the end, good work! This wasn't intended to be this long, but I get carried away sometimes...
