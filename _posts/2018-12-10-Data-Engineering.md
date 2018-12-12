@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "Data Engineering"
+title: "What is Data Engineering?"
 date: 2018-12-10 10:57
 categories: posts
 comments: true
@@ -10,9 +10,9 @@ TODO links
 
 # A (not so brief) introduction to Data Engineering
 
-As part of my handover whilst leaving my job, I was asked to explain the basics of Data Engineering, as my departure would be leaving the team without anyone with that skillset. I gave a workshop/talk, and wrote up notes for that to keep around in case anyone forgot the finer details. The notes may've got a bit out of hand, as I found myself at the tail-end of a 19 page document! Anyhow, I figured since it's not proprietary, I should probably share it here as well, which should force me to remove at least some of the mistakes. I've been playing around with Spark and Hadoop for 4-5 years, and GCP for around 2, but I'm by no means an expert - so there may be the odd error here and there!
+As part of my handover whilst leaving my job, I was asked to explain the basics of Data Engineering, as my departure would be leaving the team without that skillset. I gave a workshop/talk, and wrote up notes for that to keep around in case anyone forgot the finer details. The notes may've got a bit out of hand, as I found myself at the tail-end of a 19 page document! Anyhow, I figured since it's not proprietary, I should probably share it here as well, which should force me to remove at least some of the mistakes. I've been playing around with Spark and Hadoop for 4-5 years, and GCP for around 2, but I'm by no means an expert - so there may be the odd error here and there!
 
-I'm going to lean fairly heavily towards tech I'm familiar with (Hadoop, Spark, Beam, GCP). That doesn't mean it's bad to use Flink, or EMR, or any of the other alternatives, merely that I can't weigh in on how they work and my experiences with them. 
+I'm going to lean fairly heavily towards tech I'm familiar with (Hadoop, Spark, Beam, GCP). That doesn't mean it's bad to use Flink, EMR, or any of the other alternatives, merely that I can't weigh in on how they work and my experiences with them. 
 
 ## But first... a history lesson
 
@@ -85,7 +85,6 @@ import re
 
 WORD_RE = re.compile(r"[\w']+")
 
-
 class MRWordCount(MRJob):
 
     def mapper(self, _, line):
@@ -94,7 +93,6 @@ class MRWordCount(MRJob):
 
     def reducer(self, key, values):
         yield key, sum(values)
-
 
 if __name__ == '__main__':
     MRWordCount.run()
@@ -112,7 +110,6 @@ from mrjob.step import MRStep
 import re
 
 WORD_RE = re.compile(r"[\w']+")
-
 
 class MRMostUsedWord(MRJob):
 
@@ -136,7 +133,6 @@ class MRMostUsedWord(MRJob):
 
     def reducer_find_max_word(self, _, word_count_pairs):
         yield max(word_count_pairs)
-
 
 if __name__ == '__main__':
     MRMostUsedWord.run()
