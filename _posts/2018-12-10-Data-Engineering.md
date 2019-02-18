@@ -6,8 +6,6 @@ categories: posts
 comments: true
 ---
 
-TODO links
-
 # A (not so brief) introduction to Data Engineering
 
 As part of my handover whilst leaving my job, I was asked to explain the basics of Data Engineering, as my departure would be leaving the team without that skillset. I gave a workshop/talk, and wrote up notes for that to keep around in case anyone forgot the finer details. The notes may've got a bit out of hand, as I found myself at the tail-end of a 19 page document! Anyhow, I figured since it's not proprietary, I should probably share it here as well, which should force me to remove at least some of the mistakes. I've been playing around with Spark and Hadoop for 4-5 years, and GCP for around 2, but I'm by no means an expert - so there may be the odd error here and there!
