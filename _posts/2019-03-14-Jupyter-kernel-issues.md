@@ -22,4 +22,4 @@ pip uninstall tornado
 pip install tornado==5.1.1
 ```
 
-If you want to dig in deeper, there's [an issue open](https://github.com/jupyter/notebook/issues/4399) on the Jupyter GitHub project to track it.
+If you want to dig in deeper, there's [an issue open](https://github.com/jupyter/notebook/issues/4399) on the Jupyter GitHub project to track it. Hopefully this'll get fixed soon (in fact, it likely will be fixed by the time I publish this), but nevertheless, this may come in useful for someone if they have the same symptoms.
